@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Disneyland Paris Ultimate Quiz</title>
+<style>
+  :root{
+    --bg1:#061321; --bg2:#000;
+    --card:rgba(0,0,0,.82);
+    --accent:#00bfff;
+    --ok:#2ecc71; --bad:#e74c3c; --warn:#f39c12;
+    --muted:#b9c6d6;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; display:flex; justify-content:center; align-items:center;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, "Trebuchet MS", sans-serif;
+    color:#fff;
+    background: radial-gradient(circle at 30% 20%, #0d2b4a, var(--bg1) 45%, var(--bg2) 100%);
+  }
+  #game{
+    width:min(920px, 92vw);
+    background: var(--card);
+    border-radius: 22px;
+    padding: 22px;
+    box-shadow: 0 0 18px rgba(0,191,255,.35);
+    border: 1px solid rgba(0,191,255,.18);
+  }
+  header{
+    display:flex; gap:14px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+    margin-bottom: 10px;
+  }
+  h1{margin:0; font-size: clamp(20px, 2.6vw, 28px);}
+  .sub{color:var(--muted); font-size: 13px;}
+  .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between;}
+  .pill{
+    padding:8px 10px; border-radius:999px; background:rgba(0,191,255,.12);
+    border:1px solid rgba(0,191,255,.25); color:#eaf8ff; font-size:13px;
+  }
+  .grid{
+    display:grid; gap:12px;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+  }
+  @media (max-width: 720px){ .grid{grid-template-columns:1fr;} }
+  button{
+    width:100%;
+    margin:0;
+    padding:14px 14px;
+    font-size: 15px;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(45deg, #00bfff, #005bff);
+    color: white;
+    transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+  }
+  button:hover{ transform: scale(1.02); box-shadow: 0 0 10px rgba(0,191,255,.45); }
+  button:active{ transform: scale(.99); filter: brightness(.95); }
+  .btn-ghost{
+    background: rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.14);
+    box-shadow:none;
+  }
+  .btn-warn{
+    background: linear-gradient(45deg, #ffb100, #ff6a00);
+  }
+  .btn-bad{
+    background: linear-gradient(45deg, #ff4b4b, #b700ff);
+  }
+  .panel{
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.04);
+  }
+  .progress{
+    height: 10px;
+    background: rgba(255,255,255,.12);
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 12px 0 10px;
+  }
+  .bar{
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, rgba(0,191,255,.85), rgba(0,91,255,.95));
+    transition: width .25s ease;
+  }
+  .q{
+    font-size: 18px; line-height:1.25;
+    margin: 10px 0 12px;
+  }
+  .meta{
+    display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+    color: var(--muted); font-size: 13px;
+  }
+  .answers{display:grid; gap:10px; margin-top: 12px;}
+  .answers button{
+    text-align:left;
+    background: rgba(0,191,255,.10);
+    border: 1px solid rgba(0,191,255,.22);
+    box-shadow:none;
+  }
+  .answers button:hover{ box-shadow: 0 0 10px rgba(0,191,255,.25); }
+  .correct{ background: rgba(46,204,113,.18) !important; border-color: rgba(46,204,113,.55) !important; }
+  .wrong{ background: rgba(231,76,60,.18) !important; border-color: rgba(231,76,60,.55) !important; }
+  .disabled{ pointer-events:none; opacity:.85; }
+  .tag{
+    padding:6px 10px; border-radius:999px; font-size:12px;
+    background: rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.12);
+    color:#fff;
+  }
+  .tag.easy{ border-color: rgba(46,204,113,.45); }
+  .tag.medium{ border-color: rgba(0,191,255,.45); }
+  .tag.hard{ border-color: rgba(243,156,18,.55); }
+  .tag.extreme{ border-color: rgba(231,76,60,.55); }
+  .two{
+    display:grid; gap:12px;
+    grid-template-columns: 1.25fr .75fr;
+  }
+  @media (max-width: 860px){ .two{grid-template-columns:1fr;} }
+  input[type="number"]{
+    width: 120px; padding:10px 12px; border-radius: 12px;
+    border:1px solid rgba(255,255,255,.18);
+    background: rgba(0,0,0,.25);
+    color:#fff;
+    outline:none;
+  }
+  select{
+    padding:10px 12px; border-radius: 12px;
+    border:1px solid rgba(255,255,255,.18);
+    background: rgba(0,0,0,.25);
+    color:#fff;
+    outline:none;
+  }
+  .small{font-size:12px; color:var(--muted);}
+</style>
+</head>
+
+<body>
+  <div id="game">
+    <header>
+      <div>
+        <h1>🎠 Disneyland Paris — Ultimate Quiz</h1>
+        <div class="sub">Jeu cliquable multi-niveaux, questions aléatoires, score & progression.</div>
+      </div>
+      <div class="row">
+        <span class="pill" id="bankInfo">Banque: …</span>
+        <span class="pill" id="bestInfo">Meilleur score: —</span>
+      </div>
+    </header>
+
+    <div id="menu" class="panel">
+      <div class="two">
+        <div>
+          <div class="row" style="margin-bottom:10px;">
+            <div class="pill">🎯 Choisis ta difficulté</div>
+            <div class="pill">⚙️ Options</div>
+          </div>
+
+          <div class="grid">
+            <button onclick="startGame('easy')">🟢 Débutant</button>
+            <button onclick="startGame('medium')">🔵 Intermédiaire</button>
+            <button class="btn-warn" onclick="startGame('hard')">🟠 Expert</button>
+            <button class="btn-bad" onclick="startGame('extreme')">🔴 Maître Disney</button>
+          </div>
+
+          <div style="margin-top:14px;" class="row">
+            <label class="pill">Nombre de questions :
+              <input id="qCount" type="number" min="5" max="50" value="15">
+            </label>
+            <label class="pill">Mode :
+              <select id="mode">
+                <option value="classic">Classique</option>
+                <option value="streak">Combo (bonus série)</option>
+                <option value="timed">Chrono (15s/question)</option>
+              </select>
+            </label>
+          </div>
+          <div class="small" style="margin-top:8px;">
+            Astuce : tu peux monter à 50 questions par partie (aléatoires). Le jeu évite de répéter la même question dans une partie.
+          </div>
+        </div>
+
+        <div>
+          <div class="pill" style="margin-bottom:10px;">📜 Règles rapides</div>
+          <div class="small" style="line-height:1.45;">
+            • 4 réponses, 1 seule bonne.<br>
+            • Score + feedback instantané.<br>
+            • Mode Combo : +1 bonus à partir de 3 bonnes réponses d’affilée.<br>
+            • Mode Chrono : 15s par question, sinon faux.<br>
+            • Ton meilleur score par difficulté est sauvegardé dans le navigateur.
+          </div>
+
+          <div style="margin-top:12px;" class="row">
+            <button class="btn-ghost" onclick="resetBests()">Réinitialiser meilleurs scores</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="quiz" class="panel" style="display:none;">
+      <div class="meta">
+        <div class="row" style="gap:8px;">
+          <span id="difficultyTag" class="tag">—</span>
+          <span class="pill" id="roundInfo">Question — / —</span>
+          <span class="pill" id="timerInfo" style="display:none;">⏱️ 15</span>
+        </div>
+        <div class="row" style="gap:8px;">
+          <span class="pill" id="scoreInfo">Score: 0</span>
+          <span class="pill" id="streakInfo" style="display:none;">Combo: 0</span>
+          <button class="btn-ghost" style="width:auto; padding:10px 12px;" onclick="backToMenu()">Menu</button>
+        </div>
+      </div>
+
+      <div class="progress"><div class="bar" id="bar"></div></div>
+      <div class="q" id="question">…</div>
+      <div class="answers" id="answers"></div>
+      <div class="small" id="hint" style="margin-top:10px; opacity:.95;"></div>
+    </div>
+
+    <div id="end" class="panel" style="display:none;">
+      <h2 style="margin:0 0 8px;">🎉 Fin de partie</h2>
+      <div class="row" style="margin-bottom:10px;">
+        <span class="pill" id="finalScore">Score: —</span>
+        <span class="pill" id="finalBest">Meilleur: —</span>
+      </div>
+      <div class="grid">
+        <button onclick="replay()">Rejouer même difficulté</button>
+        <button class="btn-ghost" onclick="backToMenu()">Changer de difficulté</button>
+      </div>
+      <div class="panel" style="margin-top:14px;">
+        <div class="pill" style="margin-bottom:10px;">📌 Correction</div>
+        <div id="review" class="small" style="line-height:1.5;"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/**
+ * Banque de questions : 120 questions (30 par difficulté).
+ * Format:
+ *  { q: "Question", a: ["A","B","C","D"], c: indexBonneRéponse, hint?: "Indice optionnel" }
+ *
+ * NOTE: Si tu veux “encore plus”, dis-moi “rajoute 300 questions”, et je t’en génère d’un coup,
+ * triées par land (Main Street, Fantasyland, etc.) + un mode “Par thème”.
+ */
+
+const BANK = {
+  easy: [
+    {q:"Combien y a-t-il de parcs Disney à Disneyland Paris ?", a:["1","2","3","4"], c:1},
+    {q:"Quel personnage est le plus associé au logo Disney ?", a:["Mickey","Stitch","Woody","Ariel"], c:0},
+    {q:"Quel est le nom du grand château au centre du Parc Disneyland ?", a:["Château de Cendrillon","Château de la Belle au Bois Dormant","Château de la Reine","Château d’Arendelle"], c:1},
+    {q:"Dans quel land se trouve généralement le château ?", a:["Au centre du parc","Dans Frontierland","Dans Discoveryland","Dans Adventureland"], c:0},
+    {q:"Quelle attraction est une balade en bateaux avec des pirates ?", a:["Pirates of the Caribbean","It's a Small World","Peter Pan","Dumbo"], c:0},
+    {q:"Qui est le chien de Mickey ?", a:["Goofy","Pluto","Rex","Max"], c:1},
+    {q:"Quel personnage est un canard ?", a:["Donald","Mickey","Simba","Olaf"], c:0},
+    {q:"Quel personnage est un bonhomme de neige ?", a:["Olaf","Baymax","Wall-E","Timon"], c:0},
+    {q:"Quel land est souvent associé aux contes de fées ?", a:["Fantasyland","Frontierland","Discoveryland","Adventureland"], c:0},
+    {q:"Quelle zone correspond au Far West ?", a:["Frontierland","Fantasyland","Discoveryland","Main Street"], c:0},
+    {q:"Quelle attraction est un ‘petit train’ qui fait le tour du parc ?", a:["Disneyland Railroad","RC Racer","Casey Jr.","Orbitron"], c:0},
+    {q:"Quel personnage est un lion ?", a:["Simba","Bambi","Dory","Baloo"], c:0},
+    {q:"Quelle attraction est une croisière autour d’un petit monde ?", a:["It's a Small World","Big Thunder Mountain","Star Tours","Indiana Jones"], c:0},
+    {q:"Quel personnage est un jouet cow-boy ?", a:["Woody","Buzz","Sulley","Hercule"], c:0},
+    {q:"Quel personnage est un ranger de l’espace jouet ?", a:["Buzz l’Éclair","Dingo","Aladdin","Merlin"], c:0},
+    {q:"Quelle attraction te fait traverser le monde de Peter Pan ?", a:["Peter Pan’s Flight","Autopia","Phantom Manor","Ratatouille"], c:0},
+    {q:"Quel véhicule est associé à ‘Autopia’ ?", a:["Des petites voitures","Des bateaux pirates","Des wagons de mine","Des navettes spatiales"], c:0},
+    {q:"Quel personnage est une sirène ?", a:["Ariel","Mulan","Tiana","Belle"], c:0},
+    {q:"Quel personnage est une princesse qui porte une robe jaune (souvent) ?", a:["Belle","Elsa","Merida","Jasmine"], c:0},
+    {q:"Dans quel land trouve-t-on souvent des aventures ‘jungle / îles’ ?", a:["Adventureland","Discoveryland","Fantasyland","Main Street"], c:0},
+    {q:"Qui est l’ami ‘ours’ de Mowgli ?", a:["Baloo","Mushu","Olaf","Gaston"], c:0},
+    {q:"Quel personnage est un extraterrestre bleu ?", a:["Stitch","Baymax","Wall-E","Pascal"], c:0},
+    {q:"Quelle attraction est liée à Blanche-Neige ?", a:["Snow White and the Seven Dwarfs","Indiana Jones","Star Tours","Cars Road Trip"], c:0},
+    {q:"Que peut-on voir souvent le soir au-dessus du château ?", a:["Un spectacle nocturne","Un match de foot","Un feu de camp","Un concert de métal"], c:0},
+    {q:"Quelle attraction est souvent associée à des ‘éléphants volants’ ?", a:["Dumbo","Pirates","Space Mountain","Tower of Terror"], c:0},
+    {q:"Quel personnage est un robot gonflable blanc ?", a:["Baymax","Olaf","Groot","Genie"], c:0},
+    {q:"Quel est le lieu ‘entre’ les deux parcs avec restos & boutiques ?", a:["Disney Village","Toontown","Gotham","Hogsmeade"], c:0},
+    {q:"Main Street Vehicles appartient à quel parc ?", a:["Aucun / hors du resort","Disney Village","Disney Adventure World (ex Walt Disney Studios)","Disneyland Park"], c:3},
+    {q:"Toy Soldiers Parachute Drop appartient à quel parc ?", a:["Disneyland Park","Disney Adventure World (ex Walt Disney Studios)","DisneySea","Disney Village"], c:1},
+    {q:"Dans quel endroit du resort se trouve le restaurant Earl of Sandwich ?", a:["Disneyland Park","Disney Village","Disney Adventure World","Gare Marne-la-Vallée"], c:1},
+    {q:"Cars ROAD TRIP appartient à quelle zone d'Adventure World ?", a:["World of Frozen","World Premiere","World of Pixar","Avengers Campus"], c:2},
+    {q:"Dans quel endroit du resort se trouve Pirate Galleon ?", a:["Disney Adventure World","Disney Village","Disneyland Park","Newport Bay Hotel"], c:2},
+    {q:"Comment s’appelle le parc principal de Disneyland Paris ?", a:["Disney Adventure World","Disney Village","Disneyland Park","Magic Kingdom"], c:2},
+    {q:"En quelle année Disneyland Paris a-t-il ouvert ?", a:["1955","2002","1992","1971"], c:2},
+    {q:"Dans quel pays se situe Disneyland Paris ?", a:["Espagne","Italie","Maroc","France"], c:3},
+    {q:"Qui est la mascotte de Disney ?", a:["Ed Euromaus","Mickey","Donald","Wonder Hook"], c:1},
+    {q:"Quel est le nom de la parade (une parade connue actuelle) ?", a:["Electrical Parade","Disney Stars On Parade","Dreaming Up","Friendtastic Parade"], c:1},
+    {q:"Quelle attraction permet de voler au-dessus de Londres ?", a:["Peter Pan’s Flight","Flight Force","Parachute Drop","Star Tours"], c:0},
+    {q:"Quel est le nom du parc aquatique Disney en France ?", a:["Rulantica","Disney Splash","Il n'y en a pas","Blizzard Beach"], c:2},
+    {q:"Quel est le nom d’un spectacle nocturne ?", a:["Illuminations","Happily Ever After","Tales of Magic","Fantasmic"], c:2},
+    {q:"Quelle couleur domine le château de Disneyland Paris ?", a:["Rose","Bleu","Vert","Jaune"], c:0},
+    {q:"Quelle attraction est une promenade en bateau à Frontierland ?", a:["Mark Twain Riverboat","Thunder Mesa Riverboat Landing","Liberty Square Riverboat","Galion des pirates"], c:1},
+    {q:"Quel restaurant est situé à Main Street ?", a:["Casa de Coco","Casey Jr.","PYM Kitchen","Boardwalk Candy Palace"], c:3},
+    {q:"Quel endroit permet de rencontrer les princesses Disney ?", a:["Le château","Training Center","Le Pavillon des Princesses","Panoramagique"], c:2},
+    {q:"Quel lieu te teste pour devenir un Avenger ?", a:["W.E.B.","Crush’s Coaster","Training Center","Avengers Assemble: Flight Force"], c:2},
+    {q:"Quel personnage peut être rencontré surtout lors d’événements Halloween/Noël ?", a:["Gaston","Le Père Noël","Jack Skellington","Mickey"], c:2},
+  ],
+
+  medium: [
+    {q:"Quel hôtel est situé directement à l’entrée du parc ?", a:["New York The Art of Marvel","Newport Bay Club","Sequoia Lodge","Disneyland Hotel"], c:3},
+    {q:"Quel hôtel est sur le thème de Cars ?", a:["Disneyland Hotel","Newport Bay Club","Santa Fe","B&B Torcy"], c:2},
+    {q:"Quel hôtel ne dispose pas de navette dédiée (accès surtout en voiture) ?", a:["Sequoia Lodge","Hotel Cheyenne","New York The Art Of Marvel","Davy Crockett Ranch"], c:3},
+    {q:"Quel hôtel est sur le thème Far West ?", a:["Sequoia Lodge","Hotel Cheyenne","New York The Art Of Marvel","Davy Crockett Ranch"], c:1},
+    {q:"Quelle attraction de Frontierland possède une narration complète liée à Thunder Mesa ?", a:["Big Thunder Mountain","Thunder Mesa Riverboat","Phantom Manor","Le Lucky Nugget"], c:2},
+    {q:"Quelle attraction utilise un système de véhicules suspendus à Fantasyland ?", a:["Le Voyage de Pinocchio","Peter Pan's Flight","Dumbo the Flying Elephant","It's a Small World"], c:1},
+    {q:"Quel restaurant de Disney Village propose une ambiance rock ?", a:["Sports Bar","Brasserie Rosalie","Earl of Sandwich","Rainforest Café"], c:2},
+    {q:"Comment s'appelle le théâtre de Frontierland ?", a:["The Chaparral Theater","Frontier Land Theater","Harambe Theater","Theater In The Wild"], c:0},
+    {q:"Quel est le nom du lac reliant les hôtels, Disney Village et les parcs ?", a:["Adventure Bay","Lac Disney","Disney Village's Lake","Magical Lake"], c:1},
+    {q:"Quelle zone de Disneyland Park est la plus végétalisée ?", a:["Discoveryland","Frontierland","Adventureland","Fantasyland"], c:2},
+    {q:"Quel est le nom de la place centrale devant le château ?", a:["Castle Stage","Le Hub Central","Central Plaza","La cour du château"], c:2},
+    {q:"Pourquoi Big Thunder Mountain est unique à Paris ?", a:["Il possède un looping","Il est en marche arrière","Il est sur une île","Il n'y a pas de BTM à Paris"], c:2},
+    {q:"Quel land est directement relié à Adventureland par des passages cachés ?", a:["Fantasyland","Main Street U.S.A.","Frontierland","Discoveryland"], c:2},
+    {q:"Quel restaurant de Disneyland Park est réputé pour son ambiance coloniale et ses buffets ?", a:["Colonel Hathi's Outpost","Plaza Gardens","Captain Jack's","Last Chance"], c:1},
+    {q:"Quel type de musique est majoritairement diffusé sur Main Street, U.S.A. ?", a:["Metal","Rap","Jazz","Country"], c:2},
+    {q:"Quel élément relie l'histoire de Big Thunder Mountain et Phantom Manor ?", a:["La famille Macron","La famille Ravenswood","La famille Disney","La famille Mack"], c:1},
+    {q:"Quelle attraction d’Adventureland est principalement explorée à pied ?", a:["Adventure Isle","Pirates of the Caribbean","Le Passage Enchanté","Disneyland Railroad"], c:0},
+    {q:"Quelle attraction combine eau, décors exotiques et narration ?", a:["Peter Pan's Flight","Pirates of the Caribbean","Hyperspace Mountain","DisneySea"], c:1},
+    {q:"Quel est le principal objectif de Disney Village ?", a:["Manger","Dépenser encore plus","Prolonger l'expérience Disney","Justifier le loyer du parc"], c:2},
+    {q:"Quel land est inspiré d’une vision ‘Jules Verne’ ?", a:["Discoveryland","Tomorrowland","Futureland","Starland"], c:0},
+    {q:"Quel nom est historiquement associé au resort à l’ouverture ?", a:["Euro Disney / Euro Disneyland","Disney France","Paris Magic Resort","Disneyland Europe Park"], c:0},
+    {q:"Quel élément présent sur le château fait référence à la France ?", a:["Sa couleur","Ses vitraux intérieurs","De petits escargots dorés","Le portrait du président"], c:2},
+  ],
+
+  hard: [
+    {q:"Quel élément du château est unique à Disneyland Paris et absent des autres parcs ?", a:["Le Dragon sous le château","Sa taille","Son spectacle","Son emplacement"], c:0},
+    {q:"Dans quel land se trouve ‘Skull Rock’ ?", a:["Adventureland","Frontierland","Fantasyland","Discoveryland"], c:0},
+    {q:"‘La Cabane des Robinson’ est plutôt dans…", a:["Adventureland","Discoveryland","Fantasyland","Main Street"], c:0},
+    {q:"Pourquoi Adventureland est-il volontairement labyrinthique à Paris ?", a:["Pour renforcer l'immersion d'une exploration","Pour perdre des gens","Pour forcer à passer devant les boutiques","Car les ingénieurs étaient bourrés"], c:0},
+    {q:"‘Adventure Isle’ est…", a:["Un réseau de grottes & passerelles","Un grand huit","Un cinéma 3D","Un théâtre"], c:0},
+    {q:"Quel est le type d’attraction d’Indiana Jones (Paris) ?", a:["Montagnes russes","Bateau","Chute libre","Simulateur de vol"], c:0},
+    {q:"Comment s'appelle le propriétaire du manoir dans Thunder Mesa ?", a:["Henry Ravenswood","Billy Ravenswood","Patrick Ravenswood","Mélanie Ravenswood"], c:0},
+    {q:"Quelle attraction est une visite des ‘contes’ en maquettes via bateaux ?", a:["Le Pays des Contes de Fées","Pirates of the Caribbean","Ratatouille","Cars Road Trip"], c:0},
+    {q:"Quel est l’intérêt principal de ‘Swiss Family Treehouse’ ?", a:["Explorer une maison dans un arbre","Un looping","Une chute aquatique","Un shooting"], c:0},
+    {q:"Quel land contient ‘Main Street’ ?", a:["C’est un land en soi","Fantasyland","Discoveryland","Aucun"], c:0},
+    {q:"Quelle attraction est une ‘mission spatiale’ ?", a:["Space Mountain","Casey Jr.","Pirates","Dumbo"], c:0},
+    {q:"‘Les Mystères du Nautilus’ est une visite basée sur…", a:["20 000 Lieues sous les mers","Voyage au centre de la terre","Le tour du monde en 80 jours","Star Wars"], c:0},
+    {q:"Quel est le type de ‘Star Tours’ ?", a:["Simulateur","Grand huit","Bateaux","Chute libre"], c:0},
+    {q:"L’entrée du Parc Disneyland s’inspire surtout d’une…", a:["Rue américaine début 1900","Ville futuriste","Jungle tropicale","Village médiéval"], c:0},
+    {q:"‘Discovery Arcade’ et ‘Liberty Arcade’ sont…", a:["Deux passages couverts","Deux restaurants","Deux hôtels","Deux montagnes russes"], c:0},
+    {q:"Quel est le principe d’un ‘dark ride’ ?", a:["Parcours en intérieur, scènes animées","Course de kart","Saut à l’élastique","Jeu de ballon"], c:0},
+  ],
+
+  extreme: [
+    {q:"Quel système technique inédit prévu pour Space Mountain a été supprimé avant l’ouverture ?", a:["Un wagon suspendu","Des wagons avec rotations sur plusieurs axes","Des lunettes de réalité virtuelle","Des écrans géants"], c:1},
+    {q:"Quel nom est très associé au resort à l’ouverture ?", a:["Euro Disney Resort","Disneyland Paris Resort","Disney France World","Paris Kingdom"], c:0},
+    {q:"Le château parisien est dédié à…", a:["La Belle au Bois Dormant","Cendrillon","Raiponce","La Reine des Neiges"], c:0},
+    {q:"‘Space Mountain’ à Paris a eu un thème ‘De la Terre à la Lune’ inspiré de…", a:["Jules Verne","H.G. Wells","Tolkien","Asimov"], c:0},
+    {q:"‘Hyperspace Mountain’ est lié à quel univers ?", a:["Star Wars","Marvel","Pixar","Frozen"], c:0},
+    {q:"Quelle attraction est centrée sur une cuisine parisienne miniature ?", a:["Ratatouille","Cars Road Trip","Crush’s Coaster","Tower of Terror"], c:0},
+    {q:"Quelle attraction prévue n'est restée qu'au stade de maquette ?", a:["Un dark ride La Belle et la Bête","Un dark ride Alice","Un dark ride Raiponce","Un dark ride Mickey"], c:0},
+    {q:"Quelle attraction était prévue initialement à la place de la Cabane des Robinson ?", a:['Un "flume" thématisé Tarzan',"Un coaster Peter Pan","Un dark ride Livre de la Jungle","Un walkthrough Peter Pan"], c:0},
+    {q:"Quelle superstar mondiale était centrale dans Captain EO au CinéMagique ?", a:["Johnny Hallyday","Lady Diana","Bruce Willis","Michael Jackson"], c:3},
+    {q:"Le ‘dragon’ sous le château est un élément connu de…", a:["Disneyland Paris","Disneyland Anaheim","Tokyo DisneySea","Hong Kong Disneyland"], c:0, hint:"Spécificité très célèbre de Paris"},
+  ]
+};
+
+
+// --------- Etat du jeu ---------
+let state = {
+  level: null,
+  mode: "classic",
+  pool: [],
+  round: [],
+  idx: 0,
+  score: 0,
+  streak: 0,
+  bonus: 0,
+  qCount: 15,
+  timer: null,
+  timeLeft: 15,
+  locked: false,
+  history: [] // pour la correction
+};
+
+// --------- Helpers ---------
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
+
+function keyBest(level){ return `dlp_best_${level}`; }
+function getBest(level){
+  const v = localStorage.getItem(keyBest(level));
+  return v ? Number(v) : null;
+}
+function setBest(level, val){
+  localStorage.setItem(keyBest(level), String(val));
+}
+
+function updateHeader(){
+  const total = Object.values(BANK).reduce((s,arr)=>s+arr.length,0);
+  document.getElementById("bankInfo").textContent = `Banque: ${total} questions`;
+  const bests = ["easy","medium","hard","extreme"].map(l=>{
+    const b = getBest(l);
+    return `${l}:${b===null?"—":b}`;
+  }).join("  ");
+  document.getElementById("bestInfo").textContent = `Meilleurs scores: ${bests}`;
+}
+
+function tagLabel(level){
+  if(level==="easy") return {text:"🟢 Débutant", cls:"easy"};
+  if(level==="medium") return {text:"🔵 Intermédiaire", cls:"medium"};
+  if(level==="hard") return {text:"🟠 Expert", cls:"hard"};
+  return {text:"🔴 Maître Disney", cls:"extreme"};
+}
+
+// --------- UI ---------
+function backToMenu(){
+  stopTimer();
+  document.getElementById("menu").style.display = "block";
+  document.getElementById("quiz").style.display = "none";
+  document.getElementById("end").style.display = "none";
+  updateHeader();
+}
+
+function resetBests(){
+  ["easy","medium","hard","extreme"].forEach(l => localStorage.removeItem(keyBest(l)));
+  updateHeader();
+}
+
+function replay(){
+  if(!state.level) return backToMenu();
+  startGame(state.level);
+}
+
+function startGame(level){
+  stopTimer();
+  state.level = level;
+  state.mode = document.getElementById("mode").value;
+  state.qCount = clamp(Number(document.getElementById("qCount").value || 15), 5, 50);
+
+  // Pool + tirage sans répétition
+  state.pool = shuffle(BANK[level]);
+  state.round = state.pool.slice(0, Math.min(state.qCount, state.pool.length));
+  state.idx = 0;
+  state.score = 0;
+  state.streak = 0;
+  state.bonus = 0;
+  state.locked = false;
+  state.history = [];
+
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("end").style.display = "none";
+  document.getElementById("quiz").style.display = "block";
+
+  // Tags / mode UI
+  const t = tagLabel(level);
+  const tag = document.getElementById("difficultyTag");
+  tag.textContent = t.text;
+  tag.className = `tag ${t.cls}`;
+
+  document.getElementById("streakInfo").style.display = (state.mode==="streak") ? "inline-flex" : "none";
+  document.getElementById("timerInfo").style.display  = (state.mode==="timed")  ? "inline-flex" : "none";
+
+  showQuestion();
+}
+
+function showQuestion(){
+  state.locked = false;
+  const total = state.round.length;
+  const current = state.round[state.idx];
+
+  // Progress / header
+  document.getElementById("roundInfo").textContent = `Question ${state.idx+1} / ${total}`;
+  document.getElementById("scoreInfo").textContent = `Score: ${state.score}${state.mode==="streak" ? ` (+${state.bonus} bonus)` : ""}`;
+  document.getElementById("streakInfo").textContent = `Combo: ${state.streak}`;
+  document.getElementById("bar").style.width = `${(state.idx/total)*100}%`;
+
+  document.getElementById("question").textContent = current.q;
+  document.getElementById("hint").textContent = current.hint ? `💡 Indice : ${current.hint}` : "";
+
+  const answers = document.getElementById("answers");
+  answers.innerHTML = "";
+
+  current.a.forEach((txt, i)=>{
+    const b = document.createElement("button");
+    b.textContent = `${"ABCD"[i]}. ${txt}`;
+    b.onclick = ()=> pickAnswer(i, b);
+    answers.appendChild(b);
+  });
+
+  // Timer
+  if(state.mode==="timed"){
+    state.timeLeft = 15;
+    document.getElementById("timerInfo").textContent = `⏱️ ${state.timeLeft}`;
+    startTimer();
+  } else {
+    stopTimer();
+  }
+}
+
+function startTimer(){
+  stopTimer();
+  state.timer = setInterval(()=>{
+    state.timeLeft -= 1;
+    document.getElementById("timerInfo").textContent = `⏱️ ${state.timeLeft}`;
+    if(state.timeLeft <= 0){
+      stopTimer();
+      // timeout = faux
+      lockAnswers();
+      revealAndNext(false, null, true);
+    }
+  }, 1000);
+}
+function stopTimer(){
+  if(state.timer){ clearInterval(state.timer); state.timer = null; }
+}
+
+function lockAnswers(){
+  const buttons = document.querySelectorAll("#answers button");
+  buttons.forEach(b=> b.classList.add("disabled"));
+  state.locked = true;
+}
+
+function pickAnswer(i, btn){
+  if(state.locked) return;
+  stopTimer();
+  lockAnswers();
+
+  const q = state.round[state.idx];
+  const ok = (i === q.c);
+
+  // Color feedback
+  const buttons = document.querySelectorAll("#answers button");
+  buttons[q.c].classList.add("correct");
+  if(!ok) buttons[i].classList.add("wrong");
+
+  revealAndNext(ok, i, false);
+}
+
+function revealAndNext(ok, chosenIndex, timeout){
+  const q = state.round[state.idx];
+
+  // Score system
+  if(ok){
+    state.score += 1;
+    if(state.mode==="streak"){
+      state.streak += 1;
+      if(state.streak >= 3){
+        state.bonus += 1;
+        state.score += 1; // bonus point
+      }
+    }
+  } else {
+    if(state.mode==="streak") state.streak = 0;
+  }
+
+  state.history.push({
+    q: q.q,
+    a: q.a,
+    correct: q.c,
+    chosen: timeout ? null : chosenIndex,
+    ok,
+    timeout
+  });
+
+  // Update score display quickly
+  document.getElementById("scoreInfo").textContent = `Score: ${state.score}${state.mode==="streak" ? ` (+${state.bonus} bonus)` : ""}`;
+  document.getElementById("streakInfo").textContent = `Combo: ${state.streak}`;
+
+  setTimeout(()=>{
+    state.idx += 1;
+    const total = state.round.length;
+    document.getElementById("bar").style.width = `${(state.idx/total)*100}%`;
+
+    if(state.idx >= total){
+      endGame();
+    } else {
+      showQuestion();
+    }
+  }, 850);
+}
+
+function endGame(){
+  stopTimer();
+  document.getElementById("quiz").style.display = "none";
+  document.getElementById("end").style.display = "block";
+
+  const best = getBest(state.level);
+  const improved = (best === null || state.score > best);
+  if(improved) setBest(state.level, state.score);
+
+  document.getElementById("finalScore").textContent = `Score: ${state.score} / ${state.round.length}`;
+  document.getElementById("finalBest").textContent  = `Meilleur: ${getBest(state.level)} / ${state.round.length}`;
+
+  // Correction
+  const review = document.getElementById("review");
+  review.innerHTML = state.history.map((h, idx)=>{
+    const correctText = h.a[h.correct];
+    const chosenText = (h.chosen === null)
+      ? (h.timeout ? "⏱️ Temps écoulé" : "—")
+      : h.a[h.chosen];
+    const icon = h.ok ? "✅" : "❌";
+    return `
+      <div style="margin-bottom:10px;">
+        <div><b>${idx+1}.</b> ${icon} ${escapeHtml(h.q)}</div>
+        <div>➡️ Ta réponse : <span style="color:${h.ok ? "var(--ok)" : "var(--bad)"}">${escapeHtml(chosenText)}</span></div>
+        <div>✅ Bonne réponse : <span style="color:var(--ok)">${escapeHtml(correctText)}</span></div>
+      </div>
+    `;
+  }).join("");
+
+  updateHeader();
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+
+// Init
+updateHeader();
+</script>
+</body>
+</html>
